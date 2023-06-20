@@ -3,6 +3,7 @@
 
 #define DEBUG 1            // comentar esta linha quando for medir tempo
 #define ARRAY_SIZE 80      // trabalho final com o valores 10.000, 100.000, 1.000.000
+#define PORCENTAGEM 0.3
 
 void bs(int n, int * vetor)
 {
@@ -31,6 +32,26 @@ int tudoOk(int vetor[], int size) {
         }
     }
     return 1;
+    
+}
+
+void mandarParaEsquerda(int elevet[], int size, int destino){
+    int tamanhoCorte = size * PORCENTAGEM;
+    int messageVet[tamanhoCorte];
+    for (int i = 0; i < tamanhoCorte; i++)
+    {
+        elevet[i] = messageVet[i];
+    }
+    MPI_Send(messageVet, tamanhoCorte, MPI_INT, destino, 2, MPI_COMM_WORLD);
+}
+
+void receberDaDireita(int source, int size){
+    int messageVet[tamanhoCorte];
+    MPI_Send(messageVet, tamanhoCorte, MPI_INT, destino, 2, MPI_COMM_WORLD);
+    for (int i = 0; i < tamanhoCorte; i++)
+    {
+        elevet[i] = messageVet[i];
+    }
     
 }
 
@@ -73,18 +94,18 @@ int main()
         for (size_t i = 0; i < proc_n; i++)
         {
             MPI_Bcast(oks[my_rank], 1, MPI_INT, my_rank, MPI_COMM_WORLD);
-            if(tudoOk(oks, proc_n)) {//se todos os tiverem o ok 
+        }
+        if(tudoOk(oks, proc_n)) {
                 pronto = 1;
-            }else {
-                if(my_rank != 0) {
-                    //troco meus menores valores para a esquerda
-                }
-                if(my_rank!= proc_n-1) {
-                    //recebo os menores valores da direita
-                }
+                break;
+        }else {
+            if(my_rank != 0) {
+                mandarParaEsquerda(vetor, partialSize, my_rank-1);
+            }
+            if(my_rank!= proc_n-1) {
+                receberDaDireita(vetor, partialSize, my_rank-1);//recebo os menores valores da direita                }
             }
         }
-        
     }
     #ifdef DEBUG
     printf("\nVetor: ");
