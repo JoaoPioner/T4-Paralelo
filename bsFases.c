@@ -23,6 +23,17 @@ void bs(int n, int * vetor)
         }
 }
 
+int tudoOk(int vetor[], int size) {
+    for (size_t i = 0; i < size; i++)
+    {
+        if(vetor[i] == 0) {
+            return 0;
+        }
+    }
+    return 1;
+    
+}
+
 int main()
 {
     int my_rank;
@@ -40,6 +51,7 @@ int main()
     int i;
     int message;
     int okVizinho = 0;
+    int oks[proc_n];
 
 
     for (i=0 ; i<partialSize; i++)              /* init array with worst case for sorting */
@@ -56,12 +68,20 @@ int main()
         }
         if(vetor[0]>message) {
             okVizinho = 1;
+            oks[my_rank] = okVizinho;
         }
         for (size_t i = 0; i < proc_n; i++)
         {
-            MPI_Bcast(&okVizinho, 1, MPI_INT, my_rank, MPI_COMM_WORLD);
-            if(okVizinho == 1) {
+            MPI_Bcast(oks[my_rank], 1, MPI_INT, my_rank, MPI_COMM_WORLD);
+            if(tudoOk(oks, proc_n)) {//se todos os tiverem o ok 
                 pronto = 1;
+            }else {
+                if(my_rank != 0) {
+                    //troco meus menores valores para a esquerda
+                }
+                if(my_rank!= proc_n-1) {
+                    //recebo os menores valores da direita
+                }
             }
         }
         
