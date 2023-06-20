@@ -60,6 +60,9 @@ int main()
         for (size_t i = 0; i < proc_n; i++)
         {
             MPI_Bcast(&okVizinho, 1, MPI_INT, my_rank, MPI_COMM_WORLD);
+            if(okVizinho == 1) {
+                pronto = 1;
+            }
         }
         
     }
