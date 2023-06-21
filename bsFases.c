@@ -48,25 +48,43 @@ void mandarParaEsquerda(int elevet[], int size, int destino)
     MPI_Send(messageVet, tamanhoCorte, MPI_INT, destino, 2, MPI_COMM_WORLD);
 }
 
-void receberDaEsquerda(int source, int size, int *elevet, MPI_Status status)
+void receber(int source, int size, int *elevet, MPI_Status status)
 {
     int tamanhoCorte = size * PORCENTAGEM;
     int messageVet[tamanhoCorte];
-    int destino = source + 1;
+    #ifdef DEBUG
+        printf("\nTamanho do corte: %d; \nRecebido de: %d", tamanhoCorte, source);
+    #endif  
     MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 3, MPI_COMM_WORLD, &status);
+    #ifdef DEBUG
+        printf("\nVetor Recebido: ");
+        for (i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
+            printf("%d", messageVet[i]);
+    #endif
     for (int i = 0; i < tamanhoCorte; i++)
     {
         elevet[i] = messageVet[i];
     }
     bs(size, elevet);
-    MPI_Send(messageVet, tamanhoCorte, MPI_INT, destino, 4, MPI_COMM_WORLD);
+    MPI_Send(messageVet, tamanhoCorte, MPI_INT, source, 4, MPI_COMM_WORLD);
+    #ifdef DEBUG
+        printf("\nEnviei de volta para %d", destino);
+    #endif  
 }
 
-void receberDaDireita(int source, int size, int *elevet, MPI_Status status)
+void receberDeVolta(int source, int size, int *elevet, MPI_Status status)
 {
     int tamanhoCorte = size * PORCENTAGEM;
     int messageVet[tamanhoCorte];
+    #ifdef DEBUG
+        printf("\nTamanho do corte: %d; \nDestino: %d", tamanhoCorte, destino);
+    #endif  
     MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 3, MPI_COMM_WORLD, &status);
+    #ifdef DEBUG
+        printf("\nVetor: ");
+        for (i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
+            printf("%d", messageVet[i]);
+    #endif
     for (int i = 0; i < tamanhoCorte; i++)
     {
         elevet[i] = messageVet[i];
@@ -128,13 +146,13 @@ int main(int argc, char *argv[])
             }
             if (my_rank != proc_n - 1)
             {
-                receberDaEsquerda(my_rank - 1, partialSize, vetor, status);
-                // receberDaEsquerda(vetor, partialSize, my_rank - 1, &status); // recebo os menores valores da esquerda
+                receber(my_rank + 1, partialSize, vetor, status);
+                // receber(vetor, partialSize, my_rank - 1, &status); // recebo os menores valores da esquerda
             }
             if (my_rank != 0)
             {
-                receberDaDireita(my_rank + 1, partialSize, vetor, status);
-                // receberDaDireita(vetor, partialSize, my_rank + 1, &status); // recebo os menores valores da direita
+                receberDeVolta(my_rank - 1, partialSize, vetor, status);
+                // receberDeVolta(vetor, partialSize, my_rank + 1, &status); // recebo os menores valores da direita
             }
         }
     }
