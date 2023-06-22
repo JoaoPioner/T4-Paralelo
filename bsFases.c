@@ -52,10 +52,11 @@ void receber(int source, int size, int *elevet, MPI_Status status)
 {
     int tamanhoCorte = size * PORCENTAGEM;
     int messageVet[tamanhoCorte];
+    MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 3, MPI_COMM_WORLD, &status);
+    int sender = status.MPI_SOURCE;
     #ifdef DEBUG
         printf("\nTamanho do corte: %d; \nRecebido de: %d", tamanhoCorte, source);
     #endif  
-    MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 3, MPI_COMM_WORLD, &status);
     #ifdef DEBUG
         printf("\nVetor Recebido: ");
         for (i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
@@ -65,10 +66,11 @@ void receber(int source, int size, int *elevet, MPI_Status status)
     {
         elevet[i] = messageVet[i];
     }
+
     bs(size, elevet);
-    MPI_Send(messageVet, tamanhoCorte, MPI_INT, source, 4, MPI_COMM_WORLD);
+    MPI_Send(messageVet, tamanhoCorte, MPI_INT, sender, 4, MPI_COMM_WORLD);
     #ifdef DEBUG
-        printf("\nEnviei de volta para %d", destino);
+        printf("\nEnviei de volta para %d", sender);
     #endif  
 }
 
