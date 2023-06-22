@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-#define DEBUG 1       // comentar esta linha quando for medir tempo
+#define DEBUG 0       // comentar esta linha quando for medir tempo
 #define ARRAY_SIZE 80 // trabalho final com o valores 10.000, 100.000, 1.000.000
 #define PORCENTAGEM 0.3
 
@@ -27,7 +27,7 @@ void bs(int n, int *vetor)
 
 int tudoOk(int vetor[], int size)
 {
-    for (size_t i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
     {
         if (vetor[i] == 0)
         {
@@ -45,48 +45,52 @@ void mandarParaEsquerda(int elevet[], int size, int destino)
     {
         messageVet[i] = elevet[i];
     }
-    MPI_Send(messageVet, tamanhoCorte, MPI_INT, destino, 2, MPI_COMM_WORLD);
+    MPI_Send(messageVet, tamanhoCorte, MPI_INT, destino, 0, MPI_COMM_WORLD);
 }
 
 void receber(int source, int size, int *elevet, MPI_Status status)
 {
     int tamanhoCorte = size * PORCENTAGEM;
     int messageVet[tamanhoCorte];
-    MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 3, MPI_COMM_WORLD, &status);
+    MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 0, MPI_COMM_WORLD, &status);
     int sender = status.MPI_SOURCE;
-    #ifdef DEBUG
-        printf("\nTamanho do corte: %d; \nRecebido de: %d", tamanhoCorte, source);
-    #endif  
-    #ifdef DEBUG
-        printf("\nVetor Recebido: ");
-        for (i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
-            printf("%d", messageVet[i]);
-    #endif
-    for (int i = 0; i < tamanhoCorte; i++)
+   // #ifdef DEBUG
+     //   printf("\nTamanho do corte: %d; \nRecebido de: %d", tamanhoCorte, source);
+   // #endif  
+   // #ifdef DEBUG
+    //    printf("\nVetor Recebido: ");
+      //  for (int i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
+        //    printf("%d", messageVet[i]);
+   // #endif
+    int acc = 0;
+    for (int i = size-1; i < size+tamanhoCorte-1; i++)
     {
-        elevet[i] = messageVet[i];
+        elevet[i] = messageVet[acc];
+	printf("[%d] %d",source, elevet[i]);
+	acc++;
     }
-
-    bs(size, elevet);
-    MPI_Send(messageVet, tamanhoCorte, MPI_INT, sender, 4, MPI_COMM_WORLD);
-    #ifdef DEBUG
-        printf("\nEnviei de volta para %d", sender);
-    #endif  
+    
+    bs(tamanhoCorte*2, ptr);
+    acc = 0;
+    MPI_Send(messageVet, tamanhoCorte, MPI_INT, sender, 0, MPI_COMM_WORLD);
+   // #ifdef DEBUG
+     //   printf("\nEnviei de volta para %d", sender);
+    //#endif  
 }
 
 void receberDeVolta(int source, int size, int *elevet, MPI_Status status)
 {
     int tamanhoCorte = size * PORCENTAGEM;
     int messageVet[tamanhoCorte];
-    #ifdef DEBUG
-        printf("\nTamanho do corte: %d; \nDestino: %d", tamanhoCorte, destino);
-    #endif  
-    MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 3, MPI_COMM_WORLD, &status);
-    #ifdef DEBUG
-        printf("\nVetor: ");
-        for (i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
-            printf("%d", messageVet[i]);
-    #endif
+    //#ifdef DEBUG
+        //printf("\nTamanho do corte: %d; \nDestino: %d", tamanhoCorte, destino);
+    //#endif  
+    MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 0, MPI_COMM_WORLD, &status);
+    //#ifdef DEBUG
+       // printf("\nVetor: ");
+        //for (int i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
+         // printf("%d", messageVet[i]);
+//    #endif
     for (int i = 0; i < tamanhoCorte; i++)
     {
         elevet[i] = messageVet[i];
@@ -106,15 +110,18 @@ int main(int argc, char *argv[])
 
     int partialSize = ARRAY_SIZE / proc_n;
     int maxVal = (partialSize) * (my_rank + 1);
-    int vetor[partialSize];
+    int extra = partialSize * PORCENTAGEM; 
+    int vetor[partialSize+extra];
     int i;
     int message;
     int okVizinho = 0;
     int oks[proc_n];
-
-    for (i = 0; i < partialSize; i++) /* init array with worst case for sorting */
+   
+    for (i = 0; i < partialSize; i++){ /* init array with worst case for sorting */
         vetor[i] = maxVal - i;
-
+	printf("%d, ", vetor[i]);
+	fflush(stdout);
+    }
     while (!pronto)
     {
         bs(partialSize, vetor);
@@ -124,7 +131,7 @@ int main(int argc, char *argv[])
         }
         if (my_rank != 0)
         {
-            MPI_Recv(&message, 1, MPI_INT, my_rank - 1, 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(&message, 1, MPI_INT, my_rank - 1, 0, MPI_COMM_WORLD, &status);
         }
         if (vetor[0] > message)
         {
@@ -133,7 +140,7 @@ int main(int argc, char *argv[])
         }
         for (size_t i = 0; i < proc_n; i++)
         {
-            MPI_Bcast(&oks[my_rank], 1, MPI_INT, my_rank, MPI_COMM_WORLD);
+            MPI_Bcast(&oks[i], 1, MPI_INT, i, MPI_COMM_WORLD);
         }
         if (tudoOk(oks, proc_n))
         {
