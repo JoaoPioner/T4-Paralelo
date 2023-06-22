@@ -24,6 +24,13 @@ void bs(int n, int *vetor)
         c++;
     }
 }
+void Mostra(int *vetor, int tamanho)
+{
+    printf("\nVetor: ");
+    for (int i = 0; i < tamanho; i++) /* print sorted array */
+        printf("[%03d] ", vetor[i]);
+    printf("\n");
+}
 
 int tudoOk(int vetor[], int size)
 {
@@ -52,45 +59,45 @@ void receber(int source, int size, int *elevet, MPI_Status status)
 {
     int tamanhoCorte = size * PORCENTAGEM;
     int messageVet[tamanhoCorte];
-    MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 0, MPI_COMM_WORLD, &status);
-    int sender = status.MPI_SOURCE;
-   // #ifdef DEBUG
-     //   printf("\nTamanho do corte: %d; \nRecebido de: %d", tamanhoCorte, source);
-   // #endif  
-   // #ifdef DEBUG
+    MPI_Recv(messageVet, tamanhoCorte, MPI_INT, source, 0, MPI_COMM_WORLD, &status);
+    int sender = source;
+    // #ifdef DEBUG
+    //   printf("\nTamanho do corte: %d; \nRecebido de: %d", tamanhoCorte, source);
+    // #endif
+    // #ifdef DEBUG
     //    printf("\nVetor Recebido: ");
-      //  for (int i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
-        //    printf("%d", messageVet[i]);
-   // #endif
+    //  for (int i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
+    //    printf("%d", messageVet[i]);
+    // #endif
     int acc = 0;
-    for (int i = size-1; i < size+tamanhoCorte-1; i++)
+    for (int i = size - 1; i < size + tamanhoCorte - 1; i++)
     {
         elevet[i] = messageVet[acc];
-	printf("[%d] %d",source, elevet[i]);
-	acc++;
+        printf("[%d] %d", source, elevet[i]);
+        acc++;
     }
-    
-    bs(tamanhoCorte*2, ptr);
+
+    bs(tamanhoCorte * 2, &elevet[size - tamanhoCorte]);
     acc = 0;
     MPI_Send(messageVet, tamanhoCorte, MPI_INT, sender, 0, MPI_COMM_WORLD);
-   // #ifdef DEBUG
-     //   printf("\nEnviei de volta para %d", sender);
-    //#endif  
+    // #ifdef DEBUG
+    //   printf("\nEnviei de volta para %d", sender);
+    // #endif
 }
 
 void receberDeVolta(int source, int size, int *elevet, MPI_Status status)
 {
     int tamanhoCorte = size * PORCENTAGEM;
     int messageVet[tamanhoCorte];
-    //#ifdef DEBUG
-        //printf("\nTamanho do corte: %d; \nDestino: %d", tamanhoCorte, destino);
-    //#endif  
+    // #ifdef DEBUG
+    // printf("\nTamanho do corte: %d; \nDestino: %d", tamanhoCorte, destino);
+    // #endif
     MPI_Recv(&messageVet, tamanhoCorte, MPI_INT, source, 0, MPI_COMM_WORLD, &status);
-    //#ifdef DEBUG
-       // printf("\nVetor: ");
-        //for (int i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
-         // printf("%d", messageVet[i]);
-//    #endif
+    // #ifdef DEBUG
+    //  printf("\nVetor: ");
+    // for (int i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
+    //  printf("%d", messageVet[i]);
+    //    #endif
     for (int i = 0; i < tamanhoCorte; i++)
     {
         elevet[i] = messageVet[i];
@@ -110,17 +117,16 @@ int main(int argc, char *argv[])
 
     int partialSize = ARRAY_SIZE / proc_n;
     int maxVal = (partialSize) * (my_rank + 1);
-    int extra = partialSize * PORCENTAGEM; 
-    int vetor[partialSize+extra];
+    int extra = partialSize * PORCENTAGEM;
+    int vetor[partialSize + extra];
     int i;
     int message;
     int okVizinho = 0;
     int oks[proc_n];
-   
-    for (i = 0; i < partialSize; i++){ /* init array with worst case for sorting */
+
+    for (i = 0; i < partialSize; i++)
+    { /* init array with worst case for sorting */
         vetor[i] = maxVal - i;
-	printf("%d, ", vetor[i]);
-	fflush(stdout);
     }
     while (!pronto)
     {
@@ -138,7 +144,7 @@ int main(int argc, char *argv[])
             okVizinho = 1;
             oks[my_rank] = okVizinho;
         }
-        for (size_t i = 0; i < proc_n; i++)
+        for (int i = 0; i < proc_n; i++)
         {
             MPI_Bcast(&oks[i], 1, MPI_INT, i, MPI_COMM_WORLD);
         }
@@ -165,20 +171,21 @@ int main(int argc, char *argv[])
             }
         }
     }
+    Mostra(vetor, partialSize);
     MPI_Finalize();
-#ifdef DEBUG
-    printf("\nVetor: ");
-    for (i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
-        printf("[%03d] ", vetor[i]);
-#endif
+    // #ifdef DEBUG
+    //     printf("\nVetor: ");
+    //     for (i = 0; i < ARRAY_SIZE; i++) /* print unsorted array */
+    //         printf("[%03d] ", vetor[i]);
+    // #endif
 
-        /* sort array */
+    /* sort array */
 
-#ifdef DEBUG
-    printf("\nVetor: ");
-    for (i = 0; i < ARRAY_SIZE; i++) /* print sorted array */
-        printf("[%03d] ", vetor[i]);
-#endif
+    // #ifdef DEBUG
+    //     printf("\nVetor: ");
+    //     for (i = 0; i < ARRAY_SIZE; i++) /* print sorted array */
+    //         printf("[%03d] ", vetor[i]);
+    // #endif
 
     return 0;
 }
